@@ -1,8 +1,10 @@
+import gin
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
+@gin.configurable
 class MOVEModelNT(nn.Module):
     """
     Model object for MOVE without the transposition invariant property.
@@ -17,6 +19,7 @@ class MOVEModelNT(nn.Module):
         :param final_activation: final activation to use for the model
         """
         super().__init__()
+        self.h = 12
 
         self.prelu1 = nn.PReLU(init=0.01)
         self.prelu2 = nn.PReLU(init=0.01)

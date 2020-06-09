@@ -1,5 +1,8 @@
+import os
+
 import torch
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from dataset.move_dataset_full_size import MOVEDatasetFull
 from models.move_model import MOVEModel
@@ -29,7 +32,7 @@ def test(move_model, test_loader, norm_dist=1):
         # tensor for storing all the embeddings obtained from the test set
         embed_all = torch.tensor([], device=device)
 
-        for batch_idx, item in enumerate(test_loader):
+        for item in tqdm(test_loader):
 
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
                 item = item.cuda()
@@ -47,17 +50,19 @@ def test(move_model, test_loader, norm_dist=1):
 
 
 def evaluate(save_name,
+             val_path,
+             val_label_path,
              model_type,
              emb_size,
              sum_method,
              final_activation,
-             dataset,
-             dataset_name
              ):
     """
     Main evaluation function of MOVE. For a detailed explanation of parameters,
     please check 'python move_main.py -- help'
     :param save_name: name to save model and experiment summary
+    :param val_path: path to validation data
+    :param val_label_path: path to validation ground truth labels
     :param model_type: which model to use: MOVE (0) or MOVE without transposition invariance (1)
     :param emb_size: the size of the final embeddings produced by the model
     :param sum_method: the summarization method for the model
@@ -68,17 +73,7 @@ def evaluate(save_name,
 
     # indicating which dataset to use for evaluation
     # val_subset_crema is the name of our validation set
-    if dataset_name == '':
-        if dataset == 0:
-            dataset_name = 'data/val_subset_crema.pt'
-        elif dataset == 1:
-            dataset_name = 'data/benchmark_crema.pt'
-        else:
-            dataset_name = 'data/ytc_crema.h5'
-    else:
-        dataset_name = 'data/{}'.format(dataset_name)
-
-    print('Evaluating model {} on dataset {}.'.format(save_name, dataset_name))
+    print('Evaluating model {} on dataset {}.'.format(save_name, val_path))
 
     # initializing the model
     if model_type == 0:
@@ -97,7 +92,7 @@ def evaluate(save_name,
         move_model.cuda()
 
     # loading test data, initializing the dataset object and the data loader
-    test_data, test_labels = import_dataset_from_pt(filename=dataset_name)
+    test_data, test_labels = import_dataset_from_pt(filename=val_path)
     test_map_set = MOVEDatasetFull(data=test_data, labels=test_labels)
     test_map_loader = DataLoader(test_map_set, batch_size=1, shuffle=False)
 
@@ -106,5 +101,5 @@ def evaluate(save_name,
                            test_loader=test_map_loader).cpu()
 
     # calculating the performance metrics
-    average_precision(
-        -1 * dist_map_matrix.clone() + torch.diag(torch.ones(len(test_data)) * float('-inf')), dataset=dataset)
+    average_precision(val_label_path,
+        -1 * dist_map_matrix.clone() + torch.diag(torch.ones(len(test_data)) * float('-inf')))

@@ -7,6 +7,7 @@ import torch
 from torch.optim import SGD
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from dataset.move_dataset_fixed_size import MOVEDatasetFixed
 from dataset.move_dataset_full_size import MOVEDatasetFull
@@ -19,7 +20,8 @@ from utils.move_utils import import_dataset_from_pt
 from utils.move_utils import triplet_mining_collate
 
 
-def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=1, mining_strategy=2):
+def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=1, mining_strategy=2,
+                         loss_fn=triplet_loss_mining):
     """
     Training loop for one epoch
     :param move_model: model to be trained
@@ -33,17 +35,17 @@ def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=
     move_model.train()  # setting the model to training mode
     loss_log = []  # initialize the list for logging loss values of each mini-batch
 
-    for batch_idx, batch in enumerate(train_loader):  # training loop
+    for batch in tqdm(train_loader):  # training loop
         items, labels = batch
 
         if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
             items = items.cuda()
 
-        res_1 = move_model(items)  # obtaining the embeddings of each song in the mini-batch
+        embeddings = move_model(items)  # obtaining the embeddings of each song in the mini-batch
 
         # calculating the loss value of the mini-batch
-        loss = triplet_loss_mining(res_1, move_model, labels, margin=margin, mining_strategy=mining_strategy,
-                                   norm_dist=norm_dist)
+        loss = loss_fn(embeddings, move_model, labels, margin=margin, mining_strategy=mining_strategy,
+                       norm_dist=norm_dist)
 
         # setting gradients of the optimizer to zero
         optimizer.zero_grad()
@@ -76,7 +78,7 @@ def validate_triplet_mining(move_model, val_loader, margin, norm_dist=1, mining_
         move_model.eval()  # setting the model to evaluation mode
         loss_log = []  # initialize the list for logging loss values of each mini-batch
 
-        for batch_idx, batch in enumerate(val_loader):  # training loop
+        for batch in tqdm(val_loader):  # training loop
             items, labels = batch
 
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
@@ -100,6 +102,7 @@ def train(save_name,
           train_path,
           chunks,
           val_path,
+          val_label_path,
           save_model,
           save_summary,
           seed,
@@ -127,6 +130,7 @@ def train(save_name,
     :param train_path: path of the training data
     :param chunks: how many chunks to use for the training data
     :param val_path: path of the validation data
+    :param val_label_path: path of the validation data labels
     :param save_model: whether to save model (1) or not (0)
     :param save_summary: whether to save experiment summary (1) or not (0)
     :param seed: random seed
@@ -181,15 +185,12 @@ def train(save_name,
     val_map_log = []
 
     # loading the training and validation data
-    if chunks == 1:  # hack for handling 1 chunk for training data
-        train_path = '{}_1.pt'.format(train_path)
-    else:
-        train_path = train_path
-    train_data, train_labels = import_dataset_from_pt('data/{}'.format(train_path),
+    train_data, train_labels = import_dataset_from_pt(train_path,
                                                       chunks=chunks, model_type=model_type)
     print('Train data has been loaded!')
 
-    val_data, val_labels = import_dataset_from_pt('data/{}'.format(val_path), chunks=1, model_type=model_type)
+    val_data, val_labels = import_dataset_from_pt(val_path, chunks=1, model_type=model_type)
+    # print(f'[d.shape for d in val_data[:5]] = {[d.shape for d in val_data[:5]]}')
     print('Validation data has been loaded!')
 
     # selecting the H dimension of the input data
@@ -242,23 +243,24 @@ def train(save_name,
     for epoch in range(num_of_epochs):
         last_epoch = epoch  # tracking last epoch to make sure that model didn't quit early
 
-        start = time.monotonic()  # start time for the training loop
-        train_loss = train_triplet_mining(move_model=move_model,
-                                          optimizer=optimizer,
-                                          train_loader=train_loader,
-                                          margin=margin,
-                                          norm_dist=norm_dist,
-                                          mining_strategy=mining_strategy)
-        print('Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
+        train_loss, val_loss = 88888888, 88888888
+        # start = time.monotonic()  # start time for the training loop
+        # train_loss = train_triplet_mining(move_model=move_model,
+        #                                   optimizer=optimizer,
+        #                                   train_loader=train_loader,
+        #                                   margin=margin,
+        #                                   norm_dist=norm_dist,
+        #                                   mining_strategy=mining_strategy)
+        # print('Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
-        start = time.monotonic()  # start time for the validation loop
-        val_loss = validate_triplet_mining(move_model=move_model,
-                                           val_loader=val_loader,
-                                           margin=margin,
-                                           norm_dist=norm_dist,
-                                           mining_strategy=mining_strategy)
+        # start = time.monotonic()  # start time for the validation loop
+        # val_loss = validate_triplet_mining(move_model=move_model,
+        #                                    val_loader=val_loader,
+        #                                    margin=margin,
+        #                                    norm_dist=norm_dist,
+        #                                    mining_strategy=mining_strategy)
 
-        print('Validation loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
+        # print('Validation loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the mean average precision calculation
 
@@ -269,10 +271,14 @@ def train(save_name,
         # calculation performance metrics
         # average_precision function uses similarities, not distances
         # we multiple the distances with -1, and set the diagonal (self-similarity) -inf
-        val_map_score = average_precision(
-            -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')),
-            dataset=0)
+        val_map_score = average_precision(val_label_path,
+            -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')))
         print('Test loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
+
+        # printing the metrics
+        print('training_loss: {}'.format(train_loss))
+        print('val_loss: {}'.format(val_loss))
+        print('val_map_score: {}'.format(val_map_score))
 
         # saving loss values for the summary
         train_loss_log.append(train_loss)
@@ -285,9 +291,6 @@ def train(save_name,
                 os.mkdir('saved_models/')
             torch.save(move_model.state_dict(), 'saved_models/model_{}.pt'.format(save_name))
 
-        # printing the losses
-        print('training_loss: {}'.format(train_loss))
-        print('val_loss: {}'.format(val_loss))
 
         # activate learning rate scheduler if needed
         if lrsch != 0:

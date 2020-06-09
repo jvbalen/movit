@@ -31,6 +31,11 @@ if __name__:
                         type=str,
                         default=defaults['val_path'],
                         help='Path for validation data')
+    parser.add_argument('-vlp',
+                        '--val_label_path',
+                        type=str,
+                        default=defaults['val_label_path'],
+                        help='Path to validation data labels')
     parser.add_argument('-sm',
                         '--save_model',
                         type=int,
@@ -159,18 +164,19 @@ if __name__:
 
     save_name = 'move'
 
-    for key in defaults.keys():
-        if key == 'abbr':
-            pass
-        else:
-            if defaults[key] != getattr(args, key):
-                save_name = '{}_{}_{}'.format(save_name, defaults['abbr'][key], getattr(args, key))
+    # for key in defaults.keys():
+    #     if key == 'abbr':
+    #         pass
+    #     else:
+    #         if defaults[key] != getattr(args, key):
+    #             save_name = '{}_{}_{}'.format(save_name, defaults['abbr'][key], getattr(args, key))
 
     if args.run_type == 'train':
         train(save_name=save_name,
               train_path=args.train_path,
               chunks=args.chunks,
               val_path=args.val_path,
+              val_label_path=args.val_label_path,
               save_model=args.save_model,
               save_summary=args.save_summary,
               seed=args.random_seed,
@@ -193,6 +199,8 @@ if __name__:
               )
     else:
         evaluate(save_name=save_name,
+                 val_path=val_path,
+                 val_label_path=val_label_path,
                  model_type=args.model_type,
                  emb_size=args.emb_size,
                  sum_method=args.sum_method,

@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import pandas as pd
 import torch
@@ -57,13 +59,13 @@ def cs_augment(pcp, p_pitch=1, p_stretch=0.3, p_warp=0.3):
     # interpolation function for time stretching and warping
     func = interpolate.interp1d(times, pcp_aug, kind='nearest', fill_value='extrapolate')
 
-    # time stretch
+    # time stretch (JVB: replaced some torch with numpy here or this would break)
     if torch.rand(1) < p_stretch:
-        p = torch.rand(1)  # random number to determine the factor of time stretching
+        p = random.random()  # random number to determine the factor of time stretching
         if p <= 0.5:
-            times_aug = np.linspace(0, w - 1, w * torch.clamp((1 - p), min=0.7, max=1))
+            times_aug = np.linspace(0, w - 1, int(w * np.clip((1 - p), 0.7, 1)))
         else:
-            times_aug = np.linspace(0, w - 1, w * torch.clamp(2 * p, min=1, max=1.5))
+            times_aug = np.linspace(0, w - 1, int(w * np.clip(2 * p, 1, 1.5)))
         pcp_aug = func(times_aug)  # applying time stretching
     else:
         times_aug = times
@@ -105,32 +107,23 @@ def triplet_mining_collate(batch):
     return torch.cat(items, 0), labels
 
 
-def average_precision(ypred, k=None, eps=1e-10, reduce_mean=True, dataset=0):
+def average_precision(label_path, ypred, k=None, eps=1e-10, reduce_mean=True, q_file=None, c_file=None):
     """
     Calculating performance metrics
+    :param label_path: path to ground truth labels
     :param ypred: square distance matrix
     :param k: k value for map@k
     :param eps: epsilon value for numerical stability
     :param reduce_mean: whether to take mean of the average precision values of each query
-    :param dataset: which dataset to evaluate (required for loading the ground truth)
+    :param q_file: path to txt file listing the rows of ypred and ytrue denoting queries, as one-based indices
+    :param c_file: path to txt file listing the cols of ypred and ytrue denoting candidates, as one-based indices
     :return: mean average precision value
     """
-    if dataset == 0:  # loading the ground truth for our validation set
-        ytrue = 'data/ytrue_validation.pt'
-        ytrue = torch.load(ytrue).float()
-    elif dataset == 1:  # loading the ground truth for Da-TACOS
-        ytrue = 'data/ytrue_benchmark.pt'
-        ytrue = torch.load(ytrue).float()
-    else:  # loading the ground truth for YoutubeCovers
-        ytrue = 'data/ytrue_ytc.pt'
-        ytrue = torch.load(ytrue).float()
-
-        i1 = pd.read_csv('data/ytc_test.txt', header=None, index_col=None).values.flatten().tolist()
-        i2 = pd.read_csv('data/ytc_ref.txt', header=None, index_col=None).values.flatten().tolist()
-        i1 = [item - 1 for item in i1]
-        i2 = [item - 1 for item in i2]
-        ytrue = ytrue[i1][:, i2]
-        ypred = ypred[i1][:, i2]
+    ytrue = torch.load(label_path).float()
+    if q_file:
+        q = np.loadtxt(q_file) - 1  # one-based -> zero-based
+        c = np.loadtxt(c_file) - 1
+        ytrue, ypred = ytrue[q][:, c], ypred[q][:, c]
 
     if k is None:
         k = ypred.size(1)
