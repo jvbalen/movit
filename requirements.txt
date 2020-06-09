@@ -1,4 +1,6 @@
 torch==1.1.0
 numpy==1.12.1
-scipy==0.19.0
-pandas==0.23.1
+scipy
+pandas
+gin-config==0.1.1
+tqdm
