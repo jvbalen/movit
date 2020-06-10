@@ -82,19 +82,6 @@ def create_analysis_ytrue(labels, base_dir, out_path=None):
     torch.save(torch.Tensor(ytrue), os.path.join(base_dir, out_path))
 
 
-def split_train_val(metadata, n_val=1000):
-    """Utility for splitting metadata into train, validation
-    """
-    keys = list(metadata.keys())
-    random.shuffle(keys)
-    train_set = {k: metadata[k] for k in keys[:-n_val]}
-    val_set = {k: metadata[k] for k in keys[-n_val:]}
-    assert len(set(train_set.keys()) | set(val_set.keys())) == len(metadata)
-    assert len(set(train_set.keys()) & set(val_set.keys())) == 0
-
-    return train_set, val_set
-
-
 if __name__ == '__main__':
     """
     NOTE: using option transposed_pcp=True for coveranalysis data as crema features are Tx12 there instead of 12xT
