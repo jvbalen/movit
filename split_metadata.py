@@ -26,7 +26,7 @@ if __name__ == '__main__':
     
     base, filename = os.path.split(path)
     filename, ext = os.path.splitext(filename)
-    with open(os.path.join(base, f'{filename}_train_X{ext}'), 'w') as f:
+    with open(os.path.join(base, f'{filename}_train{ext}'), 'w') as f:
         json.dump(d_train, f)
-    with open(os.path.join(base, f'{filename}_val_X{ext}'), 'w') as f:
+    with open(os.path.join(base, f'{filename}_val{ext}'), 'w') as f:
         json.dump(d_val, f)

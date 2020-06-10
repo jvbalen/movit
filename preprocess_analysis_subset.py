@@ -87,7 +87,7 @@ if __name__ == '__main__':
     NOTE: using option transposed_pcp=True for coveranalysis data as crema features are Tx12 there instead of 12xT
     """
     base_dir = sys.argv[1]  # path to da-tacos data
-    json_path = sys.argv[2] if len(sys.argv) > 2 else None  # optional path to json file containing (split) metadata
+    json_path = sys.argv[2] if len(sys.argv) > 2 else None  # optional path to json file containing metadata split (relative to base) 
     tag = '_' + sys.argv[3] if len(sys.argv) > 3 else None  # optional tag e.g. 'train' or 'val'
     labels = create_analysis_pt(base_dir, json_path=json_path, h5_path=None, out_path=f'coveranalysis_crema{tag}.pt', transposed_pcp=True)
     create_analysis_ytrue(labels, base_dir, out_path=f'ytrue_coveranalysis{tag}.pt')

@@ -243,24 +243,23 @@ def train(save_name,
     for epoch in range(num_of_epochs):
         last_epoch = epoch  # tracking last epoch to make sure that model didn't quit early
 
-        train_loss, val_loss = 88888888, 88888888
-        # start = time.monotonic()  # start time for the training loop
-        # train_loss = train_triplet_mining(move_model=move_model,
-        #                                   optimizer=optimizer,
-        #                                   train_loader=train_loader,
-        #                                   margin=margin,
-        #                                   norm_dist=norm_dist,
-        #                                   mining_strategy=mining_strategy)
-        # print('Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
+        # train_loss, val_loss = 88888888, 88888888
+        start = time.monotonic()  # start time for the training loop
+        train_loss = train_triplet_mining(move_model=move_model,
+                                          optimizer=optimizer,
+                                          train_loader=train_loader,
+                                          margin=margin,
+                                          norm_dist=norm_dist,
+                                          mining_strategy=mining_strategy)
+        print('Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
-        # start = time.monotonic()  # start time for the validation loop
-        # val_loss = validate_triplet_mining(move_model=move_model,
-        #                                    val_loader=val_loader,
-        #                                    margin=margin,
-        #                                    norm_dist=norm_dist,
-        #                                    mining_strategy=mining_strategy)
-
-        # print('Validation loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
+        start = time.monotonic()  # start time for the validation loop
+        val_loss = validate_triplet_mining(move_model=move_model,
+                                           val_loader=val_loader,
+                                           margin=margin,
+                                           norm_dist=norm_dist,
+                                           mining_strategy=mining_strategy)
+        print('Validation loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the mean average precision calculation
 
