@@ -19,7 +19,7 @@ class MOVEModel(nn.Module):
         :param final_activation: final activation to use for the model
         """
         super().__init__()
-        self.h = 23
+        self.n_bins = 23
 
         self.prelu1 = nn.PReLU(init=0.01)
         self.prelu2 = nn.PReLU(init=0.01)

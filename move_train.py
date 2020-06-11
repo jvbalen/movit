@@ -241,6 +241,7 @@ def train(save_name,
 
     # main training loop
     for epoch in range(num_of_epochs):
+        print(f'Epoch {epoch + 1}/{num_of_epochs}')
         last_epoch = epoch  # tracking last epoch to make sure that model didn't quit early
 
         # train_loss, val_loss = 88888888, 88888888
@@ -277,7 +278,7 @@ def train(save_name,
         # printing the metrics
         print('training_loss: {}'.format(train_loss))
         print('val_loss: {}'.format(val_loss))
-        print('val_map_score: {}'.format(val_map_score))
+        print('val_map_score: {}'.format(val_map_score), flush=True)
 
         # saving loss values for the summary
         train_loss_log.append(train_loss)
