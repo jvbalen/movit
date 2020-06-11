@@ -48,7 +48,7 @@ def train_triplet_mining(move_model, optimizer, train_loader, margin=1.0, norm_d
         embeddings = move_model(items)  # obtaining the embeddings of each song in the mini-batch
 
         # calculating the loss value of the mini-batch
-        loss = loss_fn(embeddings, labels, margin=margin, mining_strategy=mining_strategy,
+        loss = loss_fn(embeddings, move_model, labels, margin=margin, mining_strategy=mining_strategy,
                        norm_dist=norm_dist)
 
         # setting gradients of the optimizer to zero
