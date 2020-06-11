@@ -175,7 +175,6 @@ def train(Model=MOVEModel,
 
         start = time.monotonic()  # start time for the validation loop
         val_loss = validate_triplet_mining(move_model=model, val_loader=val_loader)
-
         print('Validation loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the mean average precision calculation
@@ -187,9 +186,8 @@ def train(Model=MOVEModel,
         # calculation performance metrics
         # average_precision function uses similarities, not distances
         # we multiple the distances with -1, and set the diagonal (self-similarity) -inf
-        val_map_score = average_precision(
-            -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(n_val) * float('-inf')),
-            ytrue_path=ytrue_path)
+        val_map_score = average_precision(val_labels_path,
+            -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(n_val) * float('-inf')))
         print('Test loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
         # saving model if needed
