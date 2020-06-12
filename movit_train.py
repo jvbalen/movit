@@ -167,6 +167,7 @@ def train(Model=MOVEModel,
 
     # main training loop
     for epoch in range(num_of_epochs):
+        print(f'Epoch {epoch + 1}/{num_of_epochs}')
         last_epoch = epoch  # tracking last epoch to make sure that model didn't quit early
 
         start = time.monotonic()  # start time for the training loop
@@ -199,6 +200,7 @@ def train(Model=MOVEModel,
         # printing the losses
         print('training_loss: {}'.format(train_loss))
         print('val_loss: {}'.format(val_loss))
+        print('val_map_score: {}'.format(val_map_score), flush=True)
 
         # activate learning rate scheduler if needed
         if lr_schedule:

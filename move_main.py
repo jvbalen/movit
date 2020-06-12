@@ -199,11 +199,9 @@ if __name__:
               )
     else:
         evaluate(save_name=save_name,
-                 val_path=val_path,
-                 val_label_path=val_label_path,
+                 val_path=args.val_path,
+                 val_label_path=args.val_label_path,
                  model_type=args.model_type,
                  emb_size=args.emb_size,
                  sum_method=args.sum_method,
-                 final_activation=args.final_activation,
-                 dataset=args.dataset,
-                 dataset_name=args.dataset_name)
+                 final_activation=args.final_activation)
