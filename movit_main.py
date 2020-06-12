@@ -1,8 +1,13 @@
-import argparse
+import os
 import json
+import datetime
+import argparse
+
 import gin
 
 from movit_train import train
+from movit_evaluate import evaluate
+from utils.movit_utils import make_log_dir
 
 
 if __name__:
@@ -14,26 +19,22 @@ if __name__:
                         help='Path for validation data')
     parser.add_argument('-vl', '--val-labels', type=str, default=None,
                         help='Path for validation labels, formatted for ranking metrics')
-    parser.add_argument('-m', '--model', type=str, default=None,
-                        help='Path for training data. If more than one file are used, '
-                             'write only the common part')
-    parser.add_argument('-o', '--out', type=str, default=None,
-                        help='Path for writing output')
+    parser.add_argument('-l', '--log', type=str, default='experiments',
+                        help='Path to training output (model, summaries)')
     parser.add_argument('-c', '--config', type=str, default=None,
                         help='Path to gin config file')
     args = parser.parse_args()
+
+    # parse config file with gin-config
     gin.parse_config_file(args.config)
 
     if args.train:
+        log_dir = make_log_dir(args.log)
         train(train_path=args.train,
               val_path=args.val,
               val_labels_path=args.val_labels,
-              model_path=args.model,
-              out_path=args.out)
+              log_dir=log_dir)
     else:
-        raise NotImplementedError()
-        # evaluate(save_name='movit',
-        #          train_path=args.train_path,
-        #          val_path=args.val_path,
-        #          model_path=args.model_path,
-        #          out_path=args.out_path)
+        evaluate(val_path=args.val,
+                 val_labels_path=args.val_labels,
+                 log_dir=args.log)
