@@ -17,7 +17,7 @@ from models.move_model_nt import MOVEModelNT
 from move_evaluate import test
 from move_losses import triplet_loss_mining
 from utils.move_utils import average_precision, triplet_mining_collate
-from utils.movit_utils import load_data
+from utils.movit_utils import load_data, make_log_dir
 
 
 @gin.configurable
@@ -106,7 +106,7 @@ def train(Model=MOVEModel,
           seed=42, num_of_epochs=120, trans_inv=True,
           lr=0.1, lr_phases=3, lrsch_factor=0.2, momentum=0):
     """
-    TODO: update params, use model_path, out_path
+    TODO: update below param docs
 
     Main training function of MOVE. For a detailed explanation of parameters,
     please check 'python move_main.py -- help'
@@ -124,6 +124,7 @@ def train(Model=MOVEModel,
     :param lrsch_factor: the decrease rate of learning rate
     :param momentum: momentum for optimizer
     """
+    log_dir = make_log_dir(log_dir)
     summary = defaultdict(list)  # initializing the summary dict
 
     # initiating the necessary random seeds

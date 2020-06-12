@@ -6,7 +6,6 @@ import gin
 
 from movit_train import train
 from movit_evaluate import evaluate
-from utils.movit_utils import make_log_dir
 
 
 if __name__:
@@ -24,16 +23,15 @@ if __name__:
                         help='Path to gin config file')
     args = parser.parse_args()
 
-    # parse config file with gin-config
-    gin.parse_config_file(args.config)
-
     if args.train:
-        log_dir = make_log_dir(args.log)
+        gin.parse_config_file(args.config)
         train(train_path=args.train,
               val_path=args.val,
               val_labels_path=args.val_labels,
-              log_dir=log_dir)
+              log_dir=args.log)
     else:
+        if args.config is None:
+            gin.parse_config_file(os.path.join(args.log, 'config.gin'))
         evaluate(val_path=args.val,
                  val_labels_path=args.val_labels,
                  log_dir=args.log)
