@@ -1,4 +1,5 @@
 import os
+import datetime
 
 import gin
 import torch
@@ -67,7 +68,7 @@ def import_dataset_from_pt(path, n_bins=23):
 def make_log_dir(base_dir):
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    log_dir = os.path.join(base_dir, datetime)
+    log_dir = os.path.join(base_dir, timestamp)
     if not os.path.exists(base_dir):
         os.mkdir(base_dir)
     if not os.path.exists(log_dir):

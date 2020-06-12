@@ -23,7 +23,7 @@ def evaluate(Model=MOVEModel, log_dir=None,
     """
     Main evaluation function of MOVE. For a detailed explanation of parameters
     """
-    print('Evaluating model {} on dataset {}.'.format(model_name, val_path))
+    print(f'Evaluating model on dataset {val_path}.')
     # initializing the model
     # loading a pre-trained model
     # sending the model to gpu, if available

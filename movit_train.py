@@ -169,7 +169,7 @@ def train(Model=MOVEModel,
         last_epoch = epoch  # tracking last epoch to make sure that model didn't quit early
 
         start = time.monotonic()  # start time for the training loop
-        train_loss = train_triplet_mining(move_model=model, optimizer=optimizer, train_loader=train_loader)
+        train_loss = train_triplet_mining(model, optimizer=optimizer, train_loader=train_loader)
         print('Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch + 1, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the validation loop
