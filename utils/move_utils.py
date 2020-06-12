@@ -107,7 +107,7 @@ def triplet_mining_collate(batch):
     return torch.cat(items, 0), labels
 
 
-def average_precision(label_path, ypred, k=None, eps=1e-10, reduce_mean=True, q_file=None, c_file=None):
+def average_precision(label_path, ypred, k=None, eps=1e-10, q_file=None, c_file=None):
     """
     Calculating performance metrics
     :param label_path: path to ground truth labels
@@ -142,14 +142,21 @@ def average_precision(label_path, ypred, k=None, eps=1e-10, reduce_mean=True, q_
     mask = (found > 0).float()
     ap = torch.sum(prec*mask, 1)/(torch.sum(ytrue, 1)+eps)
     ap = ap[torch.sum(ytrue, 1) > 0]
+
     print('mAP: {:.3f}'.format(ap.mean().item()))
     print('MRR: {:.3f}'.format(mrr.item()))
     print('MR: {:.3f}'.format(mr.item()))
     print('Top1: {}'.format(top1.item()))
     print('Top10: {}'.format(top10.item()))
-    if reduce_mean:
-        return ap.mean()
-    return ap
+    ranking_metrics = {
+        'mAP': ap.mean().item(),
+        'MRR': mrr.item(),
+        'MR': mr.item(),
+        'Top 1': top1.item(),
+        'Top 10': top10.item()
+    }
+    
+    return ranking_metrics
 
 
 def pairwise_distance_matrix(x, y=None, eps=1e-12):
