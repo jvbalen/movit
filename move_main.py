@@ -204,4 +204,5 @@ if __name__:
                  model_type=args.model_type,
                  emb_size=args.emb_size,
                  sum_method=args.sum_method,
-                 final_activation=args.final_activation)
+                 final_activation=args.final_activation,
+                 save_metrics=args.save_summary)

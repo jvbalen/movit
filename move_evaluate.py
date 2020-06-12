@@ -1,4 +1,5 @@
 import os
+import json
 
 import torch
 from torch.utils.data import DataLoader
@@ -56,6 +57,7 @@ def evaluate(save_name,
              emb_size,
              sum_method,
              final_activation,
+             save_metrics,
              ):
     """
     Main evaluation function of MOVE. For a detailed explanation of parameters,
@@ -67,8 +69,6 @@ def evaluate(save_name,
     :param emb_size: the size of the final embeddings produced by the model
     :param sum_method: the summarization method for the model
     :param final_activation: final activation to use for the model
-    :param dataset: which dataset to evaluate the model on. (0) validation set, (1) da-tacos, (2) ytc
-    :param dataset_name: name of the file to evaluate
     """
 
     # indicating which dataset to use for evaluation
@@ -101,5 +101,13 @@ def evaluate(save_name,
                            test_loader=test_map_loader).cpu()
 
     # calculating the performance metrics
-    average_precision(val_label_path,
+    metrics = average_precision(val_label_path,
         -1 * dist_map_matrix.clone() + torch.diag(torch.ones(len(test_data)) * float('-inf')))
+
+    if save_metrics:
+        if not os.path.exists('experiment_summaries/'):
+            os.mkdir('experiment_summaries/')
+        with open('experiment_summaries/eval_{}.json'.format(save_name), 'w') as log:
+            json.dump(metrics, log, indent='\t')
+
+    return metrics
