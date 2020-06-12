@@ -186,8 +186,9 @@ def train(Model=MOVEModel,
         # calculation performance metrics
         # average_precision function uses similarities, not distances
         # we multiple the distances with -1, and set the diagonal (self-similarity) -inf
-        val_map_score = average_precision(val_labels_path,
+        ranking_metrics = average_precision(val_labels_path,
             -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(n_val) * float('-inf')))
+        val_map_score = ranking_metrics['mAP']
         print('Test loop: Epoch {} - Duration {:.2f} mins'.format(epoch + 1, (time.monotonic()-start)/60))
 
         # saving model if needed
@@ -201,7 +202,7 @@ def train(Model=MOVEModel,
         print('val_map_score: {}'.format(val_map_score), flush=True)
         summary['train_loss_log'].append(train_loss)
         summary['val_loss_log'].append(val_loss)
-        summary['val_map_log'].append(val_map_score.item())
+        summary['val_map_log'].append(val_map_score)
 
         # save summary, if needed, after each epoch
         if save_summary:

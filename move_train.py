@@ -271,8 +271,9 @@ def train(save_name,
         # calculation performance metrics
         # average_precision function uses similarities, not distances
         # we multiple the distances with -1, and set the diagonal (self-similarity) -inf
-        val_map_score = average_precision(val_label_path,
+        ranking_metrics = average_precision(val_label_path,
             -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')))
+        val_map_score = ranking_metrics['mAP']
         print('Test loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
         # printing the metrics
@@ -283,7 +284,7 @@ def train(save_name,
         # saving loss values for the summary
         train_loss_log.append(train_loss)
         val_loss_log.append(val_loss)
-        val_map_log.append(val_map_score.item())
+        val_map_log.append(val_map_score)
 
         # saving model if needed
         if save_model == 1:
