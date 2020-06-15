@@ -14,14 +14,13 @@ from dataset.move_dataset_full_size import MOVEDatasetFull
 from models.move_model import MOVEModel
 from models.move_model_nt import MOVEModelNT
 from move_evaluate import test
-from move_losses import triplet_loss_mining
+from move_losses import triplet_loss
 from utils.move_utils import average_precision
 from utils.move_utils import import_dataset_from_pt
 from utils.move_utils import triplet_mining_collate
 
 
-def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=1, mining_strategy=2,
-                         loss_fn=triplet_loss_mining):
+def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=1, mining_strategy=2):
     """
     Training loop for one epoch
     :param move_model: model to be trained
@@ -44,8 +43,8 @@ def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=
         embeddings = move_model(items)  # obtaining the embeddings of each song in the mini-batch
 
         # calculating the loss value of the mini-batch
-        loss = loss_fn(embeddings, move_model, labels, margin=margin, mining_strategy=mining_strategy,
-                       norm_dist=norm_dist)
+        loss = triplet_loss(embeddings, move_model, labels, margin=margin, mining_strategy=mining_strategy,
+                            norm_dist=norm_dist)
 
         # setting gradients of the optimizer to zero
         optimizer.zero_grad()
@@ -84,11 +83,11 @@ def validate_triplet_mining(move_model, val_loader, margin, norm_dist=1, mining_
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
                 items = items.cuda()
 
-            res_1 = move_model(items)  # obtaining the embeddings of each song in the mini-batch
+            embeddings = move_model(items)  # obtaining the embeddings of each song in the mini-batch
 
             # calculating the loss value of the mini-batch
-            loss = triplet_loss_mining(res_1, move_model, labels, margin=margin, mining_strategy=mining_strategy,
-                                       norm_dist=norm_dist)
+            loss = triplet_loss(embeddings, labels, margin=margin, mining_strategy=mining_strategy,
+                                norm_dist=norm_dist)
 
             # logging the loss value of the current mini-batch
             loss_log.append(loss.cpu().item())

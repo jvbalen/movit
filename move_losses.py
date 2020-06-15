@@ -1,10 +1,14 @@
+
+import gin
+
 import torch
 import torch.nn.functional as F
 
 from utils.move_utils import pairwise_distance_matrix
 
 
-def triplet_loss_mining(res_1, move_model, labels, margin=1, mining_strategy=2, norm_dist=1):
+@gin.configurable
+def triplet_loss(embeddings, labels, margin=1, mining_strategy=2, norm_dist=1):
     """
     Online mining function for selecting the triplets
     :param res_1: embeddings in the mini-batch
@@ -15,7 +19,6 @@ def triplet_loss_mining(res_1, move_model, labels, margin=1, mining_strategy=2, 
     :param labels: labels of the embeddings
     :return: triplet loss value
     """
-
     # creating positive and negative masks for online mining
     aux = {}
     i_labels = []
@@ -25,7 +28,7 @@ def triplet_loss_mining(res_1, move_model, labels, margin=1, mining_strategy=2, 
         i_labels += [aux[l]]*4
 
     i_labels = torch.Tensor(i_labels).view(-1, 1)
-    mask_diag = (1 - torch.eye(res_1.size(0))).long()
+    mask_diag = (1 - torch.eye(embeddings.size(0))).long()
     if torch.cuda.is_available():
         i_labels = i_labels.cuda()
         mask_diag = mask_diag.cuda()
@@ -33,9 +36,9 @@ def triplet_loss_mining(res_1, move_model, labels, margin=1, mining_strategy=2, 
     mask_pos = mask_diag * temp_mask
     mask_neg = mask_diag * (1 - mask_pos)
 
-    dist_all = pairwise_distance_matrix(res_1)  # getting the pairwise distance matrix
-    if norm_dist == 1:  # normalizing the distances by the embedding size
-        dist_all /= move_model.fin_emb_size
+    dist_all = pairwise_distance_matrix(embeddings)  # getting the pairwise distance matrix
+    if norm_dist:  # normalizing the distances by the embedding size
+        dist_all /= embeddings.size(-1)
 
     if mining_strategy == 0:  # random mining
         dist_g, dist_i = triplet_mining_random(dist_all, mask_pos, mask_neg)

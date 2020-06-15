@@ -15,14 +15,14 @@ from torch.optim import lr_scheduler
 from models.move_model import MOVEModel
 from models.move_model_nt import MOVEModelNT
 from move_evaluate import test
-from move_losses import triplet_loss_mining
+from move_losses import triplet_loss
+from movit_losses import decoder_loss
 from utils.move_utils import average_precision, triplet_mining_collate
 from utils.movit_utils import load_data, make_log_dir
 
 
 @gin.configurable
-def train_triplet_mining(model, optimizer, train_loader, margin=1.0, norm_dist=True, mining_strategy=2,
-                         loss_fn=triplet_loss_mining):
+def train_one_epoch(model, loss_fn, train_loader, optimizer):
     """
     Training loop for one epoch
     :param move_model: model to be trained
@@ -43,10 +43,11 @@ def train_triplet_mining(model, optimizer, train_loader, margin=1.0, norm_dist=T
             items = items.cuda()
 
         embeddings = model(items)  # obtaining the embeddings of each song in the mini-batch
+        if len(embeddings.shape) == 2:
+            embeddings = embeddings.unsqueeze(1)
 
         # calculating the loss value of the mini-batch
-        loss = loss_fn(embeddings, model, labels, margin=margin, mining_strategy=mining_strategy,
-                       norm_dist=norm_dist)
+        loss = loss_fn(embeddings, labels)
 
         # setting gradients of the optimizer to zero
         optimizer.zero_grad()
@@ -65,7 +66,7 @@ def train_triplet_mining(model, optimizer, train_loader, margin=1.0, norm_dist=T
     return train_loss
 
 
-def validate_triplet_mining(move_model, val_loader, margin=1.0, norm_dist=True, mining_strategy=2):
+def validate(model, loss_fn, val_loader):
     """
     validation loop for one epoch
     :param move_model: model to be used for validation
@@ -76,7 +77,7 @@ def validate_triplet_mining(move_model, val_loader, margin=1.0, norm_dist=True, 
     :return: validation loss of the current epoch
     """
     with torch.no_grad():  # deactivating gradient tracking for testing
-        move_model.eval()  # setting the model to evaluation mode
+        model.eval()  # setting the model to evaluation mode
         loss_log = []  # initialize the list for logging loss values of each mini-batch
 
         for batch in tqdm(val_loader):  # training loop
@@ -85,11 +86,10 @@ def validate_triplet_mining(move_model, val_loader, margin=1.0, norm_dist=True, 
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
                 items = items.cuda()
 
-            res_1 = move_model(items)  # obtaining the embeddings of each song in the mini-batch
+            embeddings = model(items)  # obtaining the embeddings of each song in the mini-batch
 
             # calculating the loss value of the mini-batch
-            loss = triplet_loss_mining(res_1, move_model, labels, margin=margin, mining_strategy=mining_strategy,
-                                       norm_dist=norm_dist)
+            loss = loss_fn(embeddings, labels)
 
             # logging the loss value of the current mini-batch
             loss_log.append(loss.cpu().item())
@@ -100,7 +100,7 @@ def validate_triplet_mining(move_model, val_loader, margin=1.0, norm_dist=True, 
 
 
 @gin.configurable
-def train(Model=MOVEModel, 
+def train(Model=MOVEModel, loss_fn=triplet_loss,
           train_path=None, val_path=None, val_labels_path=None,
           log_dir=None, save_model=True, save_summary=True,
           seed=42, num_of_epochs=120, trans_inv=True,
@@ -170,11 +170,11 @@ def train(Model=MOVEModel,
         last_epoch = epoch  # tracking last epoch to make sure that model didn't quit early
 
         start = time.monotonic()  # start time for the training loop
-        train_loss = train_triplet_mining(model, optimizer=optimizer, train_loader=train_loader)
+        train_loss = train_one_epoch(model, loss_fn=loss_fn, train_loader=train_loader, optimizer=optimizer)
         print('Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch + 1, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the validation loop
-        val_loss = validate_triplet_mining(move_model=model, val_loader=val_loader)
+        val_loss = validate(model, loss_fn=loss_fn, val_loader=val_loader)
         print('Validation loop: Epoch {} - Duration {:.2f} mins'.format(epoch + 1, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the mean average precision calculation

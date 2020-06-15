@@ -1,11 +1,3 @@
-# Parameters for load_data:
-# ==============================================================================
-load_data.data_aug = True
-load_data.fixed_size = True
-load_data.num_of_labels = 16
-load_data.patch_len = 1800
-load_data.ytc = False
-
 # Parameters for MOVEModel:
 # ==============================================================================
 MOVEModel.emb_size = 16000
@@ -14,19 +6,19 @@ MOVEModel.sum_method = 4
 
 # Parameters for train:
 # ==============================================================================
+train.loss_fn = @decoder_loss
 train.lr = 0.1
 train.lr_phases = 3
 train.lrsch_factor = 0.2
 train.momentum = 0
-train.num_of_epochs = 1
+train.num_of_epochs = 50
 train.save_model = True
 train.save_summary = True
 train.seed = 42
 train.trans_inv = True
 
-# Parameters for train_triplet_mining:
+# Parameters for triplet_loss:
 # ==============================================================================
-train_triplet_mining.margin = 1.0
-train_triplet_mining.mining_strategy = 2
-train_triplet_mining.norm_dist = True
-
+triplet_loss.margin = 1.0
+triplet_loss.mining_strategy = 2
+triplet_loss.norm_dist = True
