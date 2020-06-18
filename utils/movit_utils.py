@@ -1,7 +1,6 @@
 import os
 import datetime
 
-import gin
 import torch
 
 from torch.utils.data import DataLoader
@@ -11,7 +10,6 @@ from dataset.move_dataset_full_size import MOVEDatasetFull
 from utils.move_utils import triplet_mining_collate
 
 
-@gin.configurable
 def load_data(path, n_bins, patch_len=1800, data_aug=True, fixed_size=True, num_of_labels=16, ytc=False):
     """
     initializing the MOVE dataset objects and data loaders
