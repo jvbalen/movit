@@ -1,5 +1,5 @@
 torch==1.1.0
-numpy==1.12.1
+numpy==1.22.0
 scipy
 pandas
 gin-config==0.1.1
